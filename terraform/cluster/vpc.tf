@@ -6,3 +6,15 @@ resource "aws_vpc" "hotaru" {
     Name = "hotaru"
   }
 }
+
+resource "aws_subnet" "public" {
+  for_each = var.public_subnets
+
+  vpc_id            = aws_vpc.hotaru.id
+  availability_zone = each.key
+  cidr_block        = each.value
+
+  tags = {
+    Name = "hotaru-public-${each.key}"
+  }
+}
