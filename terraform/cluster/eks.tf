@@ -10,5 +10,9 @@ resource "aws_eks_cluster" "hotaru" {
     public_access_cidrs     = ["0.0.0.0/0"]
   }
 
+  access_config {
+    authentication_mode = "API"
+  }
+
   depends_on = [aws_iam_role_policy_attachment.eks_cluster]
 }
