@@ -43,6 +43,12 @@ resource "aws_eks_node_group" "spot" {
     role = "spot"
   }
 
+  taint {
+    key    = "spot"
+    value  = "true"
+    effect = "NO_SCHEDULE"
+  }
+
   depends_on = [
     aws_iam_role_policy_attachment.eks_node,
     aws_eks_addon.vpc_cni,
