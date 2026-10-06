@@ -24,3 +24,15 @@ variable "public_subnets" {
     "ap-northeast-1c" = "10.10.16.0/20"
   }
 }
+
+variable "cluster_name" {
+  description = "Name of the EKS cluster"
+  type        = string
+  default     = "hotaru"
+}
+
+variable "kubernetes_version" {
+  description = "Kubernetes version of the EKS cluster"
+  type        = string
+  default     = "1.36"
+}
