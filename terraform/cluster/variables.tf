@@ -9,3 +9,9 @@ variable "region" {
   type        = string
   default     = "ap-northeast-1"
 }
+
+variable "vpc_cidr" {
+  description = "CIDR block of the hotaru VPC"
+  type        = string
+  default     = "10.10.0.0/16"
+}
