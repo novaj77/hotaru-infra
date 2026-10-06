@@ -15,3 +15,12 @@ resource "aws_iam_role" "eks_node" {
   description        = "Assumed by EC2 worker nodes of the hotaru cluster"
   assume_role_policy = data.aws_iam_policy_document.eks_node_trust.json
 }
+
+resource "aws_iam_role_policy_attachment" "eks_node" {
+  for_each = {
+    worker = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
+  }
+
+  role       = aws_iam_role.eks_node.name
+  policy_arn = each.value
+}
