@@ -30,6 +30,8 @@ resource "aws_eks_node_group" "spot" {
   node_role_arn   = aws_iam_role.eks_node.arn
   subnet_ids      = values(aws_subnet.public)[*].id
   ami_type        = "AL2023_x86_64_STANDARD"
+  capacity_type   = "SPOT"
+  instance_types  = ["t3.medium", "t3a.medium"]
 
   scaling_config {
     desired_size = 0
