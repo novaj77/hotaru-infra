@@ -11,7 +11,8 @@ resource "aws_eks_cluster" "hotaru" {
   }
 
   access_config {
-    authentication_mode = "API"
+    authentication_mode                         = "API"
+    bootstrap_cluster_creator_admin_permissions = false
   }
 
   depends_on = [aws_iam_role_policy_attachment.eks_cluster]
