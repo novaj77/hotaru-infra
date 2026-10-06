@@ -16,6 +16,7 @@ resource "aws_subnet" "public" {
   map_public_ip_on_launch = true
 
   tags = {
-    Name = "hotaru-public-${each.key}"
+    Name                     = "hotaru-public-${each.key}"
+    "kubernetes.io/role/elb" = "1"
   }
 }
