@@ -16,5 +16,9 @@ resource "aws_eks_cluster" "hotaru" {
     bootstrap_cluster_creator_admin_permissions = false
   }
 
+  upgrade_policy {
+    support_type = "STANDARD"
+  }
+
   depends_on = [aws_iam_role_policy_attachment.eks_cluster]
 }
