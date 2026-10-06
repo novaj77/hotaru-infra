@@ -8,3 +8,8 @@ resource "aws_eks_addon" "vpc_cni" {
     }
   })
 }
+
+resource "aws_eks_addon" "kube_proxy" {
+  cluster_name = aws_eks_cluster.hotaru.name
+  addon_name   = "kube-proxy"
+}
