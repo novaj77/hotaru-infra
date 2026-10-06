@@ -19,6 +19,7 @@ resource "aws_iam_role" "eks_node" {
 resource "aws_iam_role_policy_attachment" "eks_node" {
   for_each = {
     worker = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
+    cni    = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
   }
 
   role       = aws_iam_role.eks_node.name
