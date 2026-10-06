@@ -13,6 +13,10 @@ resource "aws_eks_node_group" "system" {
     max_size     = 1
   }
 
+  labels = {
+    role = "system"
+  }
+
   depends_on = [
     aws_iam_role_policy_attachment.eks_node,
     aws_eks_addon.vpc_cni,
