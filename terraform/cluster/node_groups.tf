@@ -3,6 +3,7 @@ resource "aws_eks_node_group" "system" {
   node_group_name = "system"
   node_role_arn   = aws_iam_role.eks_node.arn
   subnet_ids      = values(aws_subnet.public)[*].id
+  ami_type        = "AL2023_x86_64_STANDARD"
 
   scaling_config {
     desired_size = 1
