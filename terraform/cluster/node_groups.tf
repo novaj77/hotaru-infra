@@ -23,3 +23,22 @@ resource "aws_eks_node_group" "system" {
     aws_eks_addon.kube_proxy,
   ]
 }
+
+resource "aws_eks_node_group" "spot" {
+  cluster_name    = aws_eks_cluster.hotaru.name
+  node_group_name = "spot"
+  node_role_arn   = aws_iam_role.eks_node.arn
+  subnet_ids      = values(aws_subnet.public)[*].id
+
+  scaling_config {
+    desired_size = 0
+    min_size     = 0
+    max_size     = 2
+  }
+
+  depends_on = [
+    aws_iam_role_policy_attachment.eks_node,
+    aws_eks_addon.vpc_cni,
+    aws_eks_addon.kube_proxy,
+  ]
+}
