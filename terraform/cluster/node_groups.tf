@@ -39,6 +39,10 @@ resource "aws_eks_node_group" "spot" {
     max_size     = 2
   }
 
+  labels = {
+    role = "spot"
+  }
+
   depends_on = [
     aws_iam_role_policy_attachment.eks_node,
     aws_eks_addon.vpc_cni,
