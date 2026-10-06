@@ -36,3 +36,9 @@ variable "kubernetes_version" {
   type        = string
   default     = "1.36"
 }
+
+variable "cluster_admin_role_name" {
+  description = "IAM role granted cluster admin through an EKS access entry"
+  type        = string
+  default     = "AccountFullAccessRole"
+}
