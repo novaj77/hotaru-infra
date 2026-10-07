@@ -44,3 +44,9 @@ resource "aws_iam_policy" "cluster_autoscaler" {
   description = "Allows Cluster Autoscaler to discover and scale the node groups of the hotaru cluster"
   policy      = data.aws_iam_policy_document.cluster_autoscaler.json
 }
+
+resource "aws_iam_role" "cluster_autoscaler" {
+  name               = "hotaru-cluster-autoscaler"
+  description        = "Assumed through EKS Pod Identity by Cluster Autoscaler"
+  assume_role_policy = data.aws_iam_policy_document.pod_identity_trust.json
+}
