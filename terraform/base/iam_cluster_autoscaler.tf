@@ -22,4 +22,19 @@ data "aws_iam_policy_document" "cluster_autoscaler" {
     resources = ["arn:aws:eks:${var.region}:${data.aws_caller_identity.current.account_id}:nodegroup/${var.eks_cluster_name}/*/*"]
   }
 
+  statement {
+    sid    = "ScaleHotaruNodegroups"
+    effect = "Allow"
+    actions = [
+      "autoscaling:SetDesiredCapacity",
+      "autoscaling:TerminateInstanceInAutoScalingGroup",
+    ]
+    resources = ["*"]
+
+    condition {
+      test     = "StringEquals"
+      variable = "aws:ResourceTag/k8s.io/cluster-autoscaler/${var.eks_cluster_name}"
+      values   = ["owned"]
+    }
+  }
 }
