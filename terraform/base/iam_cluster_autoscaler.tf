@@ -38,3 +38,9 @@ data "aws_iam_policy_document" "cluster_autoscaler" {
     }
   }
 }
+
+resource "aws_iam_policy" "cluster_autoscaler" {
+  name        = "hotaru-cluster-autoscaler"
+  description = "Allows Cluster Autoscaler to discover and scale the node groups of the hotaru cluster"
+  policy      = data.aws_iam_policy_document.cluster_autoscaler.json
+}
