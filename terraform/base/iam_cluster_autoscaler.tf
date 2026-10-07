@@ -15,4 +15,11 @@ data "aws_iam_policy_document" "cluster_autoscaler" {
     resources = ["*"]
   }
 
+  statement {
+    sid       = "DescribeHotaruNodegroups"
+    effect    = "Allow"
+    actions   = ["eks:DescribeNodegroup"]
+    resources = ["arn:aws:eks:${var.region}:${data.aws_caller_identity.current.account_id}:nodegroup/${var.eks_cluster_name}/*/*"]
+  }
+
 }

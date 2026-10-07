@@ -33,3 +33,9 @@ variable "github_api_repository" {
     id   = 1396450276
   }
 }
+
+variable "eks_cluster_name" {
+  description = "Name of the EKS cluster created by the cluster stack"
+  type        = string
+  default     = "hotaru"
+}
