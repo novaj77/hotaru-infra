@@ -12,3 +12,8 @@ output "github_oidc_provider_arn" {
   description = "ARN of the GitHub Actions OIDC provider"
   value       = aws_iam_openid_connect_provider.github.arn
 }
+
+output "alb_controller_role_arn" {
+  description = "IAM role ARN for AWS Load Balancer Controller (EKS Pod Identity)"
+  value       = aws_iam_role.alb_controller.arn
+}
