@@ -50,3 +50,8 @@ resource "aws_iam_role" "cluster_autoscaler" {
   description        = "Assumed through EKS Pod Identity by Cluster Autoscaler"
   assume_role_policy = data.aws_iam_policy_document.pod_identity_trust.json
 }
+
+resource "aws_iam_role_policy_attachment" "cluster_autoscaler" {
+  role       = aws_iam_role.cluster_autoscaler.name
+  policy_arn = aws_iam_policy.cluster_autoscaler.arn
+}
