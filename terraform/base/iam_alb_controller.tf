@@ -9,3 +9,8 @@ resource "aws_iam_role" "alb_controller" {
   description        = "Assumed through EKS Pod Identity by AWS Load Balancer Controller"
   assume_role_policy = data.aws_iam_policy_document.pod_identity_trust.json
 }
+
+resource "aws_iam_role_policy_attachment" "alb_controller" {
+  role       = aws_iam_role.alb_controller.name
+  policy_arn = aws_iam_policy.alb_controller.arn
+}
