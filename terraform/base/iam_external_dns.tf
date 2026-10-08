@@ -17,3 +17,9 @@ data "aws_iam_policy_document" "external_dns" {
     resources = ["*"]
   }
 }
+
+resource "aws_iam_policy" "external_dns" {
+  name        = "hotaru-external-dns"
+  description = "Allows external-dns to manage records in the hotaru hosted zone"
+  policy      = data.aws_iam_policy_document.external_dns.json
+}
