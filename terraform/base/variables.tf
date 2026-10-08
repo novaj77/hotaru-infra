@@ -39,3 +39,9 @@ variable "eks_cluster_name" {
   type        = string
   default     = "hotaru"
 }
+
+variable "domain_name" {
+  description = "Domain registered with Route 53 Domains (its public hosted zone is created by the registration)"
+  type        = string
+  default     = "hotaru-novaj.click"
+}
