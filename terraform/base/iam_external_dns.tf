@@ -9,4 +9,11 @@ data "aws_iam_policy_document" "external_dns" {
     ]
     resources = [data.aws_route53_zone.main.arn]
   }
+
+  statement {
+    sid       = "ListHostedZones"
+    effect    = "Allow"
+    actions   = ["route53:ListHostedZones"]
+    resources = ["*"]
+  }
 }
