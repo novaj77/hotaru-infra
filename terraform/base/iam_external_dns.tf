@@ -23,3 +23,9 @@ resource "aws_iam_policy" "external_dns" {
   description = "Allows external-dns to manage records in the hotaru hosted zone"
   policy      = data.aws_iam_policy_document.external_dns.json
 }
+
+resource "aws_iam_role" "external_dns" {
+  name               = "hotaru-external-dns"
+  description        = "Assumed through EKS Pod Identity by external-dns"
+  assume_role_policy = data.aws_iam_policy_document.pod_identity_trust.json
+}
