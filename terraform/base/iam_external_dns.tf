@@ -29,3 +29,8 @@ resource "aws_iam_role" "external_dns" {
   description        = "Assumed through EKS Pod Identity by external-dns"
   assume_role_policy = data.aws_iam_policy_document.pod_identity_trust.json
 }
+
+resource "aws_iam_role_policy_attachment" "external_dns" {
+  role       = aws_iam_role.external_dns.name
+  policy_arn = aws_iam_policy.external_dns.arn
+}
