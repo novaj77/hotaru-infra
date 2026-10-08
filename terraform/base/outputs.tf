@@ -22,3 +22,8 @@ output "cluster_autoscaler_role_arn" {
   description = "IAM role ARN for Cluster Autoscaler (EKS Pod Identity)"
   value       = aws_iam_role.cluster_autoscaler.arn
 }
+
+output "hosted_zone_name_servers" {
+  description = "Name servers of the public hosted zone"
+  value       = data.aws_route53_zone.main.name_servers
+}
