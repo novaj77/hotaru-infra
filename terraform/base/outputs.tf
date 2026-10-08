@@ -27,3 +27,8 @@ output "hosted_zone_name_servers" {
   description = "Name servers of the public hosted zone"
   value       = data.aws_route53_zone.main.name_servers
 }
+
+output "acm_certificate_arn" {
+  description = "ACM certificate for the domain and its wildcard (discovered by AWS Load Balancer Controller)"
+  value       = aws_acm_certificate_validation.main.certificate_arn
+}
