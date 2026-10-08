@@ -32,3 +32,8 @@ output "acm_certificate_arn" {
   description = "ACM certificate for the domain and its wildcard (discovered by AWS Load Balancer Controller)"
   value       = aws_acm_certificate_validation.main.certificate_arn
 }
+
+output "external_dns_role_arn" {
+  description = "IAM role ARN for external-dns (EKS Pod Identity)"
+  value       = aws_iam_role.external_dns.arn
+}
