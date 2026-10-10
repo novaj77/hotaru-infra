@@ -28,3 +28,11 @@ resource "aws_internet_gateway" "hotaru" {
     Name = "hotaru"
   }
 }
+
+resource "aws_route_table" "public" {
+  vpc_id = aws_vpc.hotaru.id
+
+  tags = {
+    Name = "hotaru-public"
+  }
+}
