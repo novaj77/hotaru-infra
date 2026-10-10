@@ -41,3 +41,9 @@ data "aws_iam_policy_document" "hotaru_deploy_ci_eks" {
     resources = ["arn:aws:eks:${var.region}:${data.aws_caller_identity.current.account_id}:cluster/${var.eks_cluster_name}"]
   }
 }
+
+resource "aws_iam_role_policy" "hotaru_deploy_ci_eks" {
+  name   = "eks-describe-cluster"
+  role   = aws_iam_role.hotaru_deploy_ci.id
+  policy = data.aws_iam_policy_document.hotaru_deploy_ci_eks.json
+}
