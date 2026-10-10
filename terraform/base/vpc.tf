@@ -20,3 +20,11 @@ resource "aws_subnet" "public" {
     "kubernetes.io/role/elb" = "1"
   }
 }
+
+resource "aws_internet_gateway" "hotaru" {
+  vpc_id = aws_vpc.hotaru.id
+
+  tags = {
+    Name = "hotaru"
+  }
+}
