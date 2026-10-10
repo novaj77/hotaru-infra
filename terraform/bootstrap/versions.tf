@@ -12,7 +12,6 @@ terraform {
     bucket       = "hotaru-tfstate-162096102590-ap-northeast-1"
     key          = "bootstrap/terraform.tfstate"
     region       = "ap-northeast-1"
-    profile      = "hotaru"
     use_lockfile = true
     encrypt      = true
   }
