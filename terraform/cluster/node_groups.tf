@@ -21,8 +21,6 @@ resource "aws_eks_node_group" "system" {
     aws_iam_role_policy_attachment.eks_node,
     aws_eks_addon.vpc_cni,
     aws_eks_addon.kube_proxy,
-    aws_route.public_internet,
-    aws_route_table_association.public,
   ]
 }
 
@@ -59,7 +57,5 @@ resource "aws_eks_node_group" "spot" {
     aws_iam_role_policy_attachment.eks_node,
     aws_eks_addon.vpc_cni,
     aws_eks_addon.kube_proxy,
-    aws_route.public_internet,
-    aws_route_table_association.public,
   ]
 }
