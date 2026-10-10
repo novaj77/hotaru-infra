@@ -34,6 +34,18 @@ variable "github_api_repository" {
   }
 }
 
+variable "github_deploy_repository" {
+  description = "Name and immutable numeric ID of the hotaru-deploy repository"
+  type = object({
+    name = string
+    id   = number
+  })
+  default = {
+    name = "hotaru-deploy"
+    id   = 1396474533
+  }
+}
+
 variable "eks_cluster_name" {
   description = "Name of the EKS cluster created by the cluster stack"
   type        = string
