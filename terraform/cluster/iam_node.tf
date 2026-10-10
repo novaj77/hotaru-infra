@@ -1,3 +1,7 @@
+data "aws_iam_role" "eks_node" {
+  name = "hotaru-eks-node"
+}
+
 data "aws_iam_policy_document" "eks_node_trust" {
   statement {
     effect  = "Allow"
