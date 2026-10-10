@@ -32,3 +32,12 @@ resource "aws_iam_role" "hotaru_deploy_ci" {
   assume_role_policy   = data.aws_iam_policy_document.hotaru_deploy_ci_trust.json
   max_session_duration = 3600
 }
+
+data "aws_iam_policy_document" "hotaru_deploy_ci_eks" {
+  statement {
+    sid       = "DescribeHotaruCluster"
+    effect    = "Allow"
+    actions   = ["eks:DescribeCluster"]
+    resources = ["arn:aws:eks:${var.region}:${data.aws_caller_identity.current.account_id}:cluster/${var.eks_cluster_name}"]
+  }
+}
