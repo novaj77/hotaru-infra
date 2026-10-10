@@ -4,21 +4,6 @@ variable "region" {
   default     = "ap-northeast-1"
 }
 
-variable "vpc_cidr" {
-  description = "CIDR block of the hotaru VPC"
-  type        = string
-  default     = "10.10.0.0/16"
-}
-
-variable "public_subnets" {
-  description = "Public subnet CIDR blocks keyed by availability zone"
-  type        = map(string)
-  default = {
-    "ap-northeast-1a" = "10.10.0.0/20"
-    "ap-northeast-1c" = "10.10.16.0/20"
-  }
-}
-
 variable "cluster_name" {
   description = "Name of the EKS cluster"
   type        = string
