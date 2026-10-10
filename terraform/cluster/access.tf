@@ -16,3 +16,12 @@ resource "aws_eks_access_policy_association" "cluster_admin" {
     type = "cluster"
   }
 }
+
+data "aws_iam_role" "hotaru_deploy_ci" {
+  name = "hotaru-deploy-github-actions"
+}
+
+resource "aws_eks_access_entry" "hotaru_deploy_ci" {
+  cluster_name  = aws_eks_cluster.hotaru.name
+  principal_arn = data.aws_iam_role.hotaru_deploy_ci.arn
+}
