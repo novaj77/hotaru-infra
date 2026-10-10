@@ -2,7 +2,7 @@ resource "aws_eks_node_group" "system" {
   cluster_name    = aws_eks_cluster.hotaru.name
   node_group_name = "system"
   node_role_arn   = aws_iam_role.eks_node.arn
-  subnet_ids      = values(aws_subnet.public)[*].id
+  subnet_ids      = data.aws_subnets.public.ids
   ami_type        = "AL2023_x86_64_STANDARD"
   capacity_type   = "ON_DEMAND"
   instance_types  = ["t3.medium"]
@@ -30,7 +30,7 @@ resource "aws_eks_node_group" "spot" {
   cluster_name    = aws_eks_cluster.hotaru.name
   node_group_name = "spot"
   node_role_arn   = aws_iam_role.eks_node.arn
-  subnet_ids      = values(aws_subnet.public)[*].id
+  subnet_ids      = data.aws_subnets.public.ids
   ami_type        = "AL2023_x86_64_STANDARD"
   capacity_type   = "SPOT"
   instance_types  = ["t3.medium", "t3a.medium"]

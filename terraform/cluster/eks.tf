@@ -5,7 +5,7 @@ resource "aws_eks_cluster" "hotaru" {
   bootstrap_self_managed_addons = false
 
   vpc_config {
-    subnet_ids              = values(aws_subnet.public)[*].id
+    subnet_ids              = data.aws_subnets.public.ids
     endpoint_public_access  = true
     endpoint_private_access = true
     public_access_cidrs     = ["0.0.0.0/0"]
