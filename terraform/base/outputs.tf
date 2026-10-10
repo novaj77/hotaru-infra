@@ -37,3 +37,8 @@ output "external_dns_role_arn" {
   description = "IAM role ARN for external-dns (EKS Pod Identity)"
   value       = aws_iam_role.external_dns.arn
 }
+
+output "hotaru_deploy_ci_role_arn" {
+  description = "IAM role ARN assumed by GitHub Actions on the main branch of hotaru-deploy"
+  value       = aws_iam_role.hotaru_deploy_ci.arn
+}
