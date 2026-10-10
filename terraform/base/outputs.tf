@@ -42,3 +42,13 @@ output "hotaru_deploy_ci_role_arn" {
   description = "IAM role ARN assumed by GitHub Actions on the main branch of hotaru-deploy"
   value       = aws_iam_role.hotaru_deploy_ci.arn
 }
+
+output "vpc_id" {
+  description = "ID of the hotaru VPC"
+  value       = aws_vpc.hotaru.id
+}
+
+output "public_subnet_ids" {
+  description = "Public subnet IDs keyed by availability zone"
+  value       = { for az, subnet in aws_subnet.public : az => subnet.id }
+}
