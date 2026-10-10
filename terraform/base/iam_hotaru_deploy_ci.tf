@@ -25,3 +25,10 @@ data "aws_iam_policy_document" "hotaru_deploy_ci_trust" {
     }
   }
 }
+
+resource "aws_iam_role" "hotaru_deploy_ci" {
+  name                 = "hotaru-deploy-github-actions"
+  description          = "Assumed by GitHub Actions on the main branch of hotaru-deploy to deploy hotaru-api to the hotaru cluster"
+  assume_role_policy   = data.aws_iam_policy_document.hotaru_deploy_ci_trust.json
+  max_session_duration = 3600
+}
