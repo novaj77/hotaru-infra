@@ -74,5 +74,11 @@ data "aws_iam_policy_document" "hotaru_cluster_ci" {
       variable = "eks:bootstrapClusterCreatorAdminPermissions"
       values   = ["false"]
     }
+
+    condition {
+      test     = "StringEquals"
+      variable = "eks:supportType"
+      values   = ["STANDARD"]
+    }
   }
 }
