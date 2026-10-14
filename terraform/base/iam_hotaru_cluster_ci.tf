@@ -68,5 +68,11 @@ data "aws_iam_policy_document" "hotaru_cluster_ci" {
       variable = "aws:RequestTag/Project"
       values   = ["hotaru"]
     }
+
+    condition {
+      test     = "Bool"
+      variable = "eks:bootstrapClusterCreatorAdminPermissions"
+      values   = ["false"]
+    }
   }
 }
