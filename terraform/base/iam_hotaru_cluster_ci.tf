@@ -119,4 +119,24 @@ data "aws_iam_policy_document" "hotaru_cluster_ci" {
       "${local.eks_arn_prefix}:podidentityassociation/${var.eks_cluster_name}/*",
     ]
   }
+
+  statement {
+    sid       = "CreateHotaruAccessEntries"
+    effect    = "Allow"
+    actions   = ["eks:CreateAccessEntry"]
+    resources = [local.hotaru_cluster_arn]
+  }
+
+  statement {
+    sid    = "ManageHotaruAccessEntries"
+    effect = "Allow"
+    actions = [
+      "eks:DescribeAccessEntry",
+      "eks:DeleteAccessEntry",
+      "eks:AssociateAccessPolicy",
+      "eks:DisassociateAccessPolicy",
+      "eks:ListAssociatedAccessPolicies",
+    ]
+    resources = ["${local.eks_arn_prefix}:access-entry/${var.eks_cluster_name}/*"]
+  }
 }
