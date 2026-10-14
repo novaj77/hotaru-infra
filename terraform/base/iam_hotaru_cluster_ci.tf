@@ -180,4 +180,17 @@ data "aws_iam_policy_document" "hotaru_cluster_ci" {
       "${local.eks_arn_prefix}:podidentityassociation/${var.eks_cluster_name}/*",
     ]
   }
+
+  statement {
+    sid     = "PassHotaruRolesToEks"
+    effect  = "Allow"
+    actions = ["iam:PassRole"]
+    resources = [
+      aws_iam_role.eks_cluster.arn,
+      aws_iam_role.eks_node.arn,
+      aws_iam_role.alb_controller.arn,
+      aws_iam_role.cluster_autoscaler.arn,
+      aws_iam_role.external_dns.arn,
+    ]
+  }
 }
