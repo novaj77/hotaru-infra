@@ -104,4 +104,19 @@ data "aws_iam_policy_document" "hotaru_cluster_ci" {
       "${local.eks_arn_prefix}:nodegroup/${var.eks_cluster_name}/*",
     ]
   }
+
+  statement {
+    sid    = "ManageHotaruAddons"
+    effect = "Allow"
+    actions = [
+      "eks:CreateAddon",
+      "eks:DescribeAddon",
+      "eks:DeleteAddon",
+    ]
+    resources = [
+      local.hotaru_cluster_arn,
+      "${local.eks_arn_prefix}:addon/${var.eks_cluster_name}/*",
+      "${local.eks_arn_prefix}:podidentityassociation/${var.eks_cluster_name}/*",
+    ]
+  }
 }
