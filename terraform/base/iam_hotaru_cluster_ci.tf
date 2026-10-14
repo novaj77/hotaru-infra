@@ -221,4 +221,16 @@ data "aws_iam_policy_document" "hotaru_cluster_ci" {
       aws_iam_role.eks_node.arn,
     ]
   }
+
+  statement {
+    sid    = "DescribeNetwork"
+    effect = "Allow"
+    actions = [
+      "ec2:DescribeVpcs",
+      "ec2:DescribeVpcAttribute",
+      "ec2:DescribeSubnets",
+      "ec2:DescribeRouteTables",
+    ]
+    resources = ["*"]
+  }
 }
