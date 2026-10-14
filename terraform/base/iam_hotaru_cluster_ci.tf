@@ -153,4 +153,18 @@ data "aws_iam_policy_document" "hotaru_cluster_ci" {
     ]
     resources = ["${local.eks_arn_prefix}:access-entry/${var.eks_cluster_name}/*"]
   }
+
+  statement {
+    sid    = "ManageHotaruPodIdentityAssociations"
+    effect = "Allow"
+    actions = [
+      "eks:CreatePodIdentityAssociation",
+      "eks:DescribePodIdentityAssociation",
+      "eks:DeletePodIdentityAssociation",
+    ]
+    resources = [
+      local.hotaru_cluster_arn,
+      "${local.eks_arn_prefix}:podidentityassociation/${var.eks_cluster_name}/*",
+    ]
+  }
 }
