@@ -1,9 +1,10 @@
 locals {
-  github_infra_repository_sub = "repo:${var.github_owner}@${var.github_owner_id}/${var.github_infra_repository.name}@${var.github_infra_repository.id}:ref:refs/heads/main"
-  tfstate_bucket_arn          = "arn:aws:s3:::hotaru-tfstate-${data.aws_caller_identity.current.account_id}-${var.region}"
-  cluster_state_object_arn    = "${local.tfstate_bucket_arn}/cluster/terraform.tfstate"
-  eks_arn_prefix              = "arn:aws:eks:${var.region}:${data.aws_caller_identity.current.account_id}"
-  hotaru_cluster_arn          = "${local.eks_arn_prefix}:cluster/${var.eks_cluster_name}"
+  github_infra_repository_sub    = "repo:${var.github_owner}@${var.github_owner_id}/${var.github_infra_repository.name}@${var.github_infra_repository.id}:ref:refs/heads/main"
+  tfstate_bucket_arn             = "arn:aws:s3:::hotaru-tfstate-${data.aws_caller_identity.current.account_id}-${var.region}"
+  cluster_state_object_arn       = "${local.tfstate_bucket_arn}/cluster/terraform.tfstate"
+  eks_arn_prefix                 = "arn:aws:eks:${var.region}:${data.aws_caller_identity.current.account_id}"
+  hotaru_cluster_arn             = "${local.eks_arn_prefix}:cluster/${var.eks_cluster_name}"
+  eks_nodegroup_service_role_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/aws-service-role/eks-nodegroup.amazonaws.com/AWSServiceRoleForAmazonEKSNodegroup"
 }
 
 data "aws_iam_role" "cluster_admin" {
@@ -191,6 +192,33 @@ data "aws_iam_policy_document" "hotaru_cluster_ci" {
       aws_iam_role.alb_controller.arn,
       aws_iam_role.cluster_autoscaler.arn,
       aws_iam_role.external_dns.arn,
+    ]
+  }
+
+  statement {
+    sid     = "ReadRolesUsedByCluster"
+    effect  = "Allow"
+    actions = ["iam:GetRole"]
+    resources = [
+      aws_iam_role.eks_cluster.arn,
+      aws_iam_role.eks_node.arn,
+      aws_iam_role.alb_controller.arn,
+      aws_iam_role.cluster_autoscaler.arn,
+      aws_iam_role.external_dns.arn,
+      aws_iam_role.hotaru_deploy_ci.arn,
+      aws_iam_role.hotaru_cluster_ci.arn,
+      data.aws_iam_role.cluster_admin.arn,
+      local.eks_nodegroup_service_role_arn,
+    ]
+  }
+
+  statement {
+    sid     = "ListPoliciesOfEksRoles"
+    effect  = "Allow"
+    actions = ["iam:ListAttachedRolePolicies"]
+    resources = [
+      aws_iam_role.eks_cluster.arn,
+      aws_iam_role.eks_node.arn,
     ]
   }
 }
