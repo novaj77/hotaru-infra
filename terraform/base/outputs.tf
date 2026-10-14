@@ -52,3 +52,8 @@ output "public_subnet_ids" {
   description = "Public subnet IDs keyed by availability zone"
   value       = { for az, subnet in aws_subnet.public : az => subnet.id }
 }
+
+output "hotaru_cluster_ci_role_arn" {
+  description = "IAM role ARN assumed by GitHub Actions on the main branch of hotaru-infra to start and stop the cluster"
+  value       = aws_iam_role.hotaru_cluster_ci.arn
+}

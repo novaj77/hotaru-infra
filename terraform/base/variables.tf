@@ -40,6 +40,18 @@ variable "github_deploy_repository" {
   }
 }
 
+variable "github_infra_repository" {
+  description = "Name and immutable numeric ID of the hotaru-infra repository"
+  type = object({
+    name = string
+    id   = number
+  })
+  default = {
+    name = "hotaru-infra"
+    id   = 1396474388
+  }
+}
+
 variable "eks_cluster_name" {
   description = "Name of the EKS cluster created by the cluster stack"
   type        = string
@@ -65,4 +77,10 @@ variable "public_subnets" {
     "ap-northeast-1a" = "10.10.0.0/20"
     "ap-northeast-1c" = "10.10.16.0/20"
   }
+}
+
+variable "cluster_admin_role_name" {
+  description = "IAM role granted cluster admin through an EKS access entry in the cluster stack"
+  type        = string
+  default     = "AccountFullAccessRole"
 }
