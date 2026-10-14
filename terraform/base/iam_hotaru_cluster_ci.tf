@@ -56,4 +56,11 @@ data "aws_iam_policy_document" "hotaru_cluster_ci" {
     actions   = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"]
     resources = ["${local.cluster_state_object_arn}.tflock"]
   }
+
+  statement {
+    sid       = "CreateHotaruCluster"
+    effect    = "Allow"
+    actions   = ["eks:CreateCluster"]
+    resources = ["*"]
+  }
 }
