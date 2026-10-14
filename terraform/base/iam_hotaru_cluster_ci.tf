@@ -259,3 +259,9 @@ data "aws_iam_policy_document" "hotaru_cluster_ci" {
     resources = [data.aws_route53_zone.main.arn]
   }
 }
+
+resource "aws_iam_role_policy" "hotaru_cluster_ci" {
+  name   = "cluster-up-down"
+  role   = aws_iam_role.hotaru_cluster_ci.id
+  policy = data.aws_iam_policy_document.hotaru_cluster_ci.json
+}
