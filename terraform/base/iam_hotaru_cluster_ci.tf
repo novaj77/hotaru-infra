@@ -25,3 +25,10 @@ data "aws_iam_policy_document" "hotaru_cluster_ci_trust" {
     }
   }
 }
+
+resource "aws_iam_role" "hotaru_cluster_ci" {
+  name                 = "hotaru-cluster-github-actions"
+  description          = "Assumed by GitHub Actions on the main branch of hotaru-infra to start and stop the hotaru cluster"
+  assume_role_policy   = data.aws_iam_policy_document.hotaru_cluster_ci_trust.json
+  max_session_duration = 3600
+}
