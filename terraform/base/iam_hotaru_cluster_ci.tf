@@ -1,5 +1,7 @@
 locals {
   github_infra_repository_sub = "repo:${var.github_owner}@${var.github_owner_id}/${var.github_infra_repository.name}@${var.github_infra_repository.id}:ref:refs/heads/main"
+  tfstate_bucket_arn          = "arn:aws:s3:::hotaru-tfstate-${data.aws_caller_identity.current.account_id}-${var.region}"
+  cluster_state_object_arn    = "${local.tfstate_bucket_arn}/cluster/terraform.tfstate"
 }
 
 data "aws_iam_policy_document" "hotaru_cluster_ci_trust" {
@@ -31,4 +33,27 @@ resource "aws_iam_role" "hotaru_cluster_ci" {
   description          = "Assumed by GitHub Actions on the main branch of hotaru-infra to start and stop the hotaru cluster"
   assume_role_policy   = data.aws_iam_policy_document.hotaru_cluster_ci_trust.json
   max_session_duration = 3600
+}
+
+data "aws_iam_policy_document" "hotaru_cluster_ci" {
+  statement {
+    sid       = "ListStateBucket"
+    effect    = "Allow"
+    actions   = ["s3:ListBucket"]
+    resources = [local.tfstate_bucket_arn]
+  }
+
+  statement {
+    sid       = "ReadWriteClusterState"
+    effect    = "Allow"
+    actions   = ["s3:GetObject", "s3:PutObject"]
+    resources = [local.cluster_state_object_arn]
+  }
+
+  statement {
+    sid       = "LockClusterState"
+    effect    = "Allow"
+    actions   = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"]
+    resources = ["${local.cluster_state_object_arn}.tflock"]
+  }
 }
