@@ -62,5 +62,11 @@ data "aws_iam_policy_document" "hotaru_cluster_ci" {
     effect    = "Allow"
     actions   = ["eks:CreateCluster"]
     resources = ["*"]
+
+    condition {
+      test     = "StringEquals"
+      variable = "aws:RequestTag/Project"
+      values   = ["hotaru"]
+    }
   }
 }
