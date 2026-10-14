@@ -244,4 +244,18 @@ data "aws_iam_policy_document" "hotaru_cluster_ci" {
     ]
     resources = ["*"]
   }
+
+  statement {
+    sid       = "FindHostedZone"
+    effect    = "Allow"
+    actions   = ["route53:ListHostedZonesByName"]
+    resources = ["*"]
+  }
+
+  statement {
+    sid       = "ListHotaruRecords"
+    effect    = "Allow"
+    actions   = ["route53:ListResourceRecordSets"]
+    resources = [data.aws_route53_zone.main.arn]
+  }
 }
