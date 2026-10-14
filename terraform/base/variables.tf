@@ -78,3 +78,9 @@ variable "public_subnets" {
     "ap-northeast-1c" = "10.10.16.0/20"
   }
 }
+
+variable "cluster_admin_role_name" {
+  description = "IAM role granted cluster admin through an EKS access entry in the cluster stack"
+  type        = string
+  default     = "AccountFullAccessRole"
+}

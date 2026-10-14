@@ -6,6 +6,10 @@ locals {
   hotaru_cluster_arn          = "${local.eks_arn_prefix}:cluster/${var.eks_cluster_name}"
 }
 
+data "aws_iam_role" "cluster_admin" {
+  name = var.cluster_admin_role_name
+}
+
 data "aws_iam_policy_document" "hotaru_cluster_ci_trust" {
   statement {
     effect  = "Allow"
@@ -125,6 +129,16 @@ data "aws_iam_policy_document" "hotaru_cluster_ci" {
     effect    = "Allow"
     actions   = ["eks:CreateAccessEntry"]
     resources = [local.hotaru_cluster_arn]
+
+    condition {
+      test     = "ArnEquals"
+      variable = "eks:principalArn"
+      values = [
+        data.aws_iam_role.cluster_admin.arn,
+        aws_iam_role.hotaru_deploy_ci.arn,
+        aws_iam_role.hotaru_cluster_ci.arn,
+      ]
+    }
   }
 
   statement {
