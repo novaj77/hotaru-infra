@@ -90,4 +90,18 @@ data "aws_iam_policy_document" "hotaru_cluster_ci" {
     actions   = ["eks:DescribeCluster", "eks:DeleteCluster"]
     resources = [local.hotaru_cluster_arn]
   }
+
+  statement {
+    sid    = "ManageHotaruNodegroups"
+    effect = "Allow"
+    actions = [
+      "eks:CreateNodegroup",
+      "eks:DescribeNodegroup",
+      "eks:DeleteNodegroup",
+    ]
+    resources = [
+      local.hotaru_cluster_arn,
+      "${local.eks_arn_prefix}:nodegroup/${var.eks_cluster_name}/*",
+    ]
+  }
 }
