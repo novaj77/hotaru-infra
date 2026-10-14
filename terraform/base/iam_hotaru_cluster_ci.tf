@@ -2,6 +2,8 @@ locals {
   github_infra_repository_sub = "repo:${var.github_owner}@${var.github_owner_id}/${var.github_infra_repository.name}@${var.github_infra_repository.id}:ref:refs/heads/main"
   tfstate_bucket_arn          = "arn:aws:s3:::hotaru-tfstate-${data.aws_caller_identity.current.account_id}-${var.region}"
   cluster_state_object_arn    = "${local.tfstate_bucket_arn}/cluster/terraform.tfstate"
+  eks_arn_prefix              = "arn:aws:eks:${var.region}:${data.aws_caller_identity.current.account_id}"
+  hotaru_cluster_arn          = "${local.eks_arn_prefix}:cluster/${var.eks_cluster_name}"
 }
 
 data "aws_iam_policy_document" "hotaru_cluster_ci_trust" {
@@ -80,5 +82,12 @@ data "aws_iam_policy_document" "hotaru_cluster_ci" {
       variable = "eks:supportType"
       values   = ["STANDARD"]
     }
+  }
+
+  statement {
+    sid       = "ReadAndDeleteHotaruCluster"
+    effect    = "Allow"
+    actions   = ["eks:DescribeCluster", "eks:DeleteCluster"]
+    resources = [local.hotaru_cluster_arn]
   }
 }
