@@ -233,4 +233,15 @@ data "aws_iam_policy_document" "hotaru_cluster_ci" {
     ]
     resources = ["*"]
   }
+
+  statement {
+    sid    = "CheckLeftovers"
+    effect = "Allow"
+    actions = [
+      "tag:GetResources",
+      "elasticloadbalancing:DescribeLoadBalancers",
+      "ec2:DescribeInstances",
+    ]
+    resources = ["*"]
+  }
 }
