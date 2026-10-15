@@ -8,6 +8,10 @@ hotaruのAWSをTerraformで作るリポジトリ
 - base：常設のリソース（ドメイン・証明書・ECR・CIのロールなど）
 - cluster：一時的なリソース（VPC・EKS・ノード）。消しても、baseには影響しない
 
+## CI/CD
+
+- PRでは、3つのstackでTerraformの書式と構文を確かめる
+
 ## 使用技術
 
 - Terraform：stateはS3に置き、ロックもS3でかける。stack同士はremote stateを使わず、名前で参照する
