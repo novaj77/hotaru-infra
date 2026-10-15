@@ -36,3 +36,12 @@ resource "aws_eks_access_policy_association" "hotaru_deploy_ci" {
     namespaces = ["hotaru"]
   }
 }
+
+data "aws_iam_role" "hotaru_cluster_ci" {
+  name = "hotaru-cluster-github-actions"
+}
+
+resource "aws_eks_access_entry" "hotaru_cluster_ci" {
+  cluster_name  = aws_eks_cluster.hotaru.name
+  principal_arn = data.aws_iam_role.hotaru_cluster_ci.arn
+}
