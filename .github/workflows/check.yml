@@ -39,3 +39,9 @@ jobs:
 
       - name: Check formatting
         run: terraform fmt -check -diff
+
+      - name: Initialize without the backend
+        run: terraform init -backend=false -input=false
+
+      - name: Validate
+        run: terraform validate -no-color
