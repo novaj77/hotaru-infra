@@ -16,3 +16,12 @@ jobs:
           persist-credentials: false
 
       - uses: ./.github/actions/setup-terraform
+
+      - name: Match the local Terraform version
+        run: |
+          local_version=$(cat .terraform-version)
+          ci_version=$(terraform version -json | jq -r .terraform_version)
+          if [ "$ci_version" != "$local_version" ]; then
+            echo "::error::Terraform $ci_version in CI does not match .terraform-version ($local_version)"
+            exit 1
+          fi
