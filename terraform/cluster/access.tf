@@ -45,3 +45,13 @@ resource "aws_eks_access_entry" "hotaru_cluster_ci" {
   cluster_name  = aws_eks_cluster.hotaru.name
   principal_arn = data.aws_iam_role.hotaru_cluster_ci.arn
 }
+
+resource "aws_eks_access_policy_association" "hotaru_cluster_ci" {
+  cluster_name  = aws_eks_cluster.hotaru.name
+  principal_arn = aws_eks_access_entry.hotaru_cluster_ci.principal_arn
+  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+
+  access_scope {
+    type = "cluster"
+  }
+}
