@@ -5,8 +5,8 @@ hotaruのAWSをTerraformで作るリポジトリ
 ## 構成
 
 - bootstrap：stateを置くS3
-- base：常設のリソース（ドメイン・証明書・ECR・CIのロールなど）
-- cluster：一時的なリソース（VPC・EKS・ノード）。消しても、baseには影響しない
+- base：常設のリソース（ドメイン・証明書・ECR・VPC・CIのロールなど）
+- cluster：一時的なリソース（EKS・ノード）。消しても、baseには影響しない
 
 ## 使用技術
 
