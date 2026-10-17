@@ -1,0 +1,47 @@
+name: check
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  terraform:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        stack:
+          - bootstrap
+          - base
+          - cluster
+    defaults:
+      run:
+        working-directory: terraform/${{ matrix.stack }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/setup-terraform
+
+      - name: Match the local Terraform version
+        working-directory: .
+        run: |
+          local_version=$(cat .terraform-version)
+          ci_version=$(terraform version -json | jq -r .terraform_version)
+          if [ "$ci_version" != "$local_version" ]; then
+            echo "::error::Terraform $ci_version in CI does not match .terraform-version ($local_version)"
+            exit 1
+          fi
+
+      - name: Check formatting
+        run: terraform fmt -check -diff
+
+      - name: Initialize without the backend
+        run: terraform init -backend=false -input=false
+
+      - name: Validate
+        run: terraform validate -no-color
