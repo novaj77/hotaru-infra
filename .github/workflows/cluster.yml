@@ -13,10 +13,14 @@ on:
 
 permissions:
   contents: read
+  id-token: write
 
 concurrency:
   group: cluster-hotaru
   cancel-in-progress: false
+
+env:
+  AWS_REGION: ap-northeast-1
 
 jobs:
   up:
@@ -30,6 +34,13 @@ jobs:
 
       - uses: ./.github/actions/setup-terraform
 
+      - name: Assume role with OIDC
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          role-session-name: hotaru-cluster-ci-${{ github.run_id }}
+          aws-region: ${{ env.AWS_REGION }}
+
   down:
     if: inputs.action == 'down'
     runs-on: ubuntu-24.04
@@ -40,3 +51,10 @@ jobs:
           persist-credentials: false
 
       - uses: ./.github/actions/setup-terraform
+
+      - name: Assume role with OIDC
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          role-session-name: hotaru-cluster-ci-${{ github.run_id }}
+          aws-region: ${{ env.AWS_REGION }}
