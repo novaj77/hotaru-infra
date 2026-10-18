@@ -182,3 +182,11 @@ jobs:
           token: ${{ steps.app-token.outputs.token }}
           path: hotaru-deploy
           persist-credentials: false
+
+      - name: Set up Helm and helmfile
+        if: steps.cluster.outputs.exists == 'true'
+        uses: ./hotaru-deploy/.github/actions/setup-helmfile
+
+      - name: Update kubeconfig
+        if: steps.cluster.outputs.exists == 'true'
+        run: aws eks update-kubeconfig --name "$CLUSTER_NAME" --alias hotaru
