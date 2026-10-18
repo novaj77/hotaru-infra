@@ -216,3 +216,15 @@ jobs:
         if: steps.cluster.outputs.exists == 'true'
         working-directory: hotaru-deploy
         run: helmfile destroy
+
+      - name: Plan the destroy
+        if: steps.cluster.outputs.exists == 'true'
+        working-directory: terraform/cluster
+        run: |
+          terraform init -input=false
+          terraform plan -destroy -input=false -out=destroy.tfplan
+
+      - name: Apply the saved destroy plan
+        if: steps.cluster.outputs.exists == 'true'
+        working-directory: terraform/cluster
+        run: terraform apply -input=false destroy.tfplan
