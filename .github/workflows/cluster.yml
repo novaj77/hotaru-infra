@@ -142,3 +142,23 @@ jobs:
           role-to-assume: ${{ vars.AWS_ROLE_ARN }}
           role-session-name: hotaru-cluster-ci-${{ github.run_id }}
           aws-region: ${{ env.AWS_REGION }}
+
+      - name: Check if the cluster exists
+        id: cluster
+        run: |
+          if status=$(aws eks describe-cluster --name "$CLUSTER_NAME" --query cluster.status --output text 2> "$RUNNER_TEMP/describe-cluster.err"); then
+            if [ "$status" != "ACTIVE" ]; then
+              echo "::error::Cluster $CLUSTER_NAME is $status"
+              exit 1
+            fi
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          elif grep -q ResourceNotFoundException "$RUNNER_TEMP/describe-cluster.err"; then
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          else
+            cat "$RUNNER_TEMP/describe-cluster.err" >&2
+            exit 1
+          fi
+
+      - name: Skip when the cluster does not exist
+        if: steps.cluster.outputs.exists == 'false'
+        run: echo "Cluster $CLUSTER_NAME does not exist. Skipped the teardown." >> "$GITHUB_STEP_SUMMARY"
