@@ -1,0 +1,278 @@
+name: cluster
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: Start or stop the hotaru cluster
+        required: true
+        type: choice
+        options:
+          - up
+          - down
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: cluster-hotaru
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: ap-northeast-1
+  TF_IN_AUTOMATION: "true"
+  CLUSTER_NAME: hotaru
+  ZONE_NAME: hotaru-novaj.click
+  API_HOST: api.hotaru-novaj.click
+
+jobs:
+  up:
+    if: inputs.action == 'up'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - name: Record the start time
+        run: echo "STARTED_AT=$(date +%s)" >> "$GITHUB_ENV"
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/setup-terraform
+
+      - name: Assume role with OIDC
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          role-session-name: hotaru-cluster-ci-${{ github.run_id }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Plan the cluster
+        working-directory: terraform/cluster
+        run: |
+          terraform init -input=false
+          terraform plan -input=false -out=cluster.tfplan
+
+      - name: Apply the saved plan
+        working-directory: terraform/cluster
+        run: terraform apply -input=false cluster.tfplan
+
+      - name: Create a token for hotaru-deploy
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.DEPLOY_READER_APP_CLIENT_ID }}
+          private-key: ${{ secrets.DEPLOY_READER_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: hotaru-deploy
+          permission-contents: read
+
+      - name: Check out hotaru-deploy
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ github.repository_owner }}/hotaru-deploy
+          token: ${{ steps.app-token.outputs.token }}
+          path: hotaru-deploy
+          persist-credentials: false
+
+      - name: Set up Helm, helmfile and helm-diff
+        uses: ./hotaru-deploy/.github/actions/setup-helmfile
+        with:
+          helm-diff: true
+
+      - name: Update kubeconfig
+        run: aws eks update-kubeconfig --name "$CLUSTER_NAME" --alias hotaru
+
+      - name: Install everything with helmfile
+        working-directory: hotaru-deploy
+        run: helmfile apply
+
+      - name: Wait for the DNS record
+        run: |
+          zone_id=$(aws route53 list-hosted-zones-by-name --dns-name "$ZONE_NAME" --query "HostedZones[?Name=='${ZONE_NAME}.'].Id | [0]" --output text)
+          for _ in $(seq 1 60); do
+            count=$(aws route53 list-resource-record-sets --hosted-zone-id "$zone_id" --query "length(ResourceRecordSets[?Name=='${API_HOST}.' && Type=='A'])" --output text)
+            if [ "$count" != 0 ]; then
+              echo "Found the A record for $API_HOST"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "::error::The A record for $API_HOST did not appear in 10 minutes"
+          exit 1
+
+      - name: Wait for /healthz
+        run: |
+          for _ in $(seq 1 60); do
+            if [ "$(curl -fsS --max-time 5 "https://${API_HOST}/healthz" 2>/dev/null)" = ok ]; then
+              echo "https://${API_HOST}/healthz returned ok"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "::error::https://${API_HOST}/healthz did not return ok in 10 minutes"
+          exit 1
+
+      - name: Write the summary
+        run: |
+          minutes=$(( ($(date +%s) - STARTED_AT) / 60 ))
+          {
+            echo "Cluster $CLUSTER_NAME is up in about $minutes minutes: https://${API_HOST}/healthz"
+            echo
+            echo '```'
+            helm list --kube-context hotaru --all-namespaces
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  down:
+    if: inputs.action == 'down'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Record the start time
+        run: echo "STARTED_AT=$(date +%s)" >> "$GITHUB_ENV"
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/setup-terraform
+
+      - name: Assume role with OIDC
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          role-session-name: hotaru-cluster-ci-${{ github.run_id }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Check if the cluster exists
+        id: cluster
+        run: |
+          if status=$(aws eks describe-cluster --name "$CLUSTER_NAME" --query cluster.status --output text 2> "$RUNNER_TEMP/describe-cluster.err"); then
+            if [ "$status" != "ACTIVE" ]; then
+              echo "::error::Cluster $CLUSTER_NAME is $status"
+              exit 1
+            fi
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          elif grep -q ResourceNotFoundException "$RUNNER_TEMP/describe-cluster.err"; then
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          else
+            cat "$RUNNER_TEMP/describe-cluster.err" >&2
+            exit 1
+          fi
+
+      - name: Skip when the cluster does not exist
+        if: steps.cluster.outputs.exists == 'false'
+        run: echo "Cluster $CLUSTER_NAME does not exist. Skipped the teardown." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Create a token for hotaru-deploy
+        id: app-token
+        if: steps.cluster.outputs.exists == 'true'
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.DEPLOY_READER_APP_CLIENT_ID }}
+          private-key: ${{ secrets.DEPLOY_READER_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: hotaru-deploy
+          permission-contents: read
+
+      - name: Check out hotaru-deploy
+        if: steps.cluster.outputs.exists == 'true'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ github.repository_owner }}/hotaru-deploy
+          token: ${{ steps.app-token.outputs.token }}
+          path: hotaru-deploy
+          persist-credentials: false
+
+      - name: Set up Helm and helmfile
+        if: steps.cluster.outputs.exists == 'true'
+        uses: ./hotaru-deploy/.github/actions/setup-helmfile
+
+      - name: Update kubeconfig
+        if: steps.cluster.outputs.exists == 'true'
+        run: aws eks update-kubeconfig --name "$CLUSTER_NAME" --alias hotaru
+
+      - name: Uninstall hotaru-api
+        if: steps.cluster.outputs.exists == 'true'
+        working-directory: hotaru-deploy
+        run: helmfile -l name=hotaru-api destroy
+
+      - name: Wait for the load balancer and the DNS records to go away
+        if: steps.cluster.outputs.exists == 'true'
+        run: |
+          zone_id=$(aws route53 list-hosted-zones-by-name --dns-name "$ZONE_NAME" --query "HostedZones[?Name=='${ZONE_NAME}.'].Id | [0]" --output text)
+          for _ in $(seq 1 30); do
+            tagged=$(aws resourcegroupstaggingapi get-resources --tag-filters "Key=elbv2.k8s.aws/cluster,Values=${CLUSTER_NAME}" --query 'length(ResourceTagMappingList)' --output text)
+            records=$(aws route53 list-resource-record-sets --hosted-zone-id "$zone_id" --query "length(ResourceRecordSets[?Type!='NS' && Type!='SOA' && Type!='CNAME'])" --output text)
+            echo "load balancer resources: $tagged, DNS records: $records"
+            if [ "$tagged" = 0 ] && [ "$records" = 0 ]; then
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "::error::The load balancer or the DNS records are still there after 5 minutes. The controllers are kept for a manual check."
+          exit 1
+
+      - name: Uninstall the controllers
+        if: steps.cluster.outputs.exists == 'true'
+        working-directory: hotaru-deploy
+        run: helmfile destroy
+
+      - name: Plan the destroy
+        if: steps.cluster.outputs.exists == 'true'
+        working-directory: terraform/cluster
+        run: |
+          terraform init -input=false
+          terraform plan -destroy -input=false -out=destroy.tfplan
+
+      - name: Apply the saved destroy plan
+        if: steps.cluster.outputs.exists == 'true'
+        working-directory: terraform/cluster
+        run: terraform apply -input=false destroy.tfplan
+
+      - name: Check for leftovers
+        run: |
+          zone_id=$(aws route53 list-hosted-zones-by-name --dns-name "$ZONE_NAME" --query "HostedZones[?Name=='${ZONE_NAME}.'].Id | [0]" --output text)
+          for _ in $(seq 1 6); do
+            if aws eks describe-cluster --name "$CLUSTER_NAME" > /dev/null 2> "$RUNNER_TEMP/describe-cluster.err"; then
+              clusters=1
+            elif grep -q ResourceNotFoundException "$RUNNER_TEMP/describe-cluster.err"; then
+              clusters=0
+            else
+              cat "$RUNNER_TEMP/describe-cluster.err" >&2
+              exit 1
+            fi
+            instances=$(aws ec2 describe-instances --filters Name=instance-state-name,Values=pending,running --query 'length(Reservations[].Instances[])' --output text)
+            load_balancers=$(aws elbv2 describe-load-balancers --query 'length(LoadBalancers)' --output text)
+            cluster_tagged=$(aws resourcegroupstaggingapi get-resources --tag-filters Key=Stack,Values=cluster --query 'length(ResourceTagMappingList)' --output text)
+            lb_tagged=$(aws resourcegroupstaggingapi get-resources --tag-filters "Key=elbv2.k8s.aws/cluster,Values=${CLUSTER_NAME}" --query 'length(ResourceTagMappingList)' --output text)
+            records=$(aws route53 list-resource-record-sets --hosted-zone-id "$zone_id" --query "length(ResourceRecordSets[?Type!='NS' && Type!='SOA' && Type!='CNAME'])" --output text)
+            total=$((clusters + instances + load_balancers + cluster_tagged + lb_tagged + records))
+            echo "cluster: $clusters, instances: $instances, load balancers: $load_balancers, Stack=cluster: $cluster_tagged, load balancer tags: $lb_tagged, DNS records: $records"
+            if [ "$total" = 0 ]; then
+              break
+            fi
+            sleep 30
+          done
+          {
+            echo "| Leftover | Count |"
+            echo "|---|---|"
+            echo "| EKS cluster | $clusters |"
+            echo "| Running EC2 instances | $instances |"
+            echo "| Load balancers | $load_balancers |"
+            echo "| Resources tagged Stack=cluster | $cluster_tagged |"
+            echo "| Resources tagged elbv2.k8s.aws/cluster | $lb_tagged |"
+            echo "| DNS records other than NS, SOA and CNAME | $records |"
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ "$total" != 0 ]; then
+            echo "::error::Some resources are left. See the summary."
+            exit 1
+          fi
+
+      - name: Write the summary
+        if: steps.cluster.outputs.exists == 'true'
+        run: |
+          minutes=$(( ($(date +%s) - STARTED_AT) / 60 ))
+          echo "Cluster $CLUSTER_NAME is down in about $minutes minutes" >> "$GITHUB_STEP_SUMMARY"

@@ -11,6 +11,7 @@ hotaruのAWSをTerraformで作るリポジトリ
 ## CI/CD
 
 - PRでは、3つのstackでTerraformの書式と構文を確かめる
+- ワークフローを手で動かすと、クラスタを起動（up）・停止（down）する。upはhotaru-apiまで入れて`/healthz`を確かめ、downは消し忘れまで確かめる
 
 ## 使用技術
 
