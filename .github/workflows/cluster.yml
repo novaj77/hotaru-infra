@@ -162,3 +162,23 @@ jobs:
       - name: Skip when the cluster does not exist
         if: steps.cluster.outputs.exists == 'false'
         run: echo "Cluster $CLUSTER_NAME does not exist. Skipped the teardown." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Create a token for hotaru-deploy
+        id: app-token
+        if: steps.cluster.outputs.exists == 'true'
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.DEPLOY_READER_APP_CLIENT_ID }}
+          private-key: ${{ secrets.DEPLOY_READER_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: hotaru-deploy
+          permission-contents: read
+
+      - name: Check out hotaru-deploy
+        if: steps.cluster.outputs.exists == 'true'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ github.repository_owner }}/hotaru-deploy
+          token: ${{ steps.app-token.outputs.token }}
+          path: hotaru-deploy
+          persist-credentials: false
