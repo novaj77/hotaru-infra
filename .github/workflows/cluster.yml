@@ -228,3 +228,42 @@ jobs:
         if: steps.cluster.outputs.exists == 'true'
         working-directory: terraform/cluster
         run: terraform apply -input=false destroy.tfplan
+
+      - name: Check for leftovers
+        run: |
+          zone_id=$(aws route53 list-hosted-zones-by-name --dns-name "$ZONE_NAME" --query "HostedZones[?Name=='${ZONE_NAME}.'].Id | [0]" --output text)
+          for _ in $(seq 1 6); do
+            if aws eks describe-cluster --name "$CLUSTER_NAME" > /dev/null 2> "$RUNNER_TEMP/describe-cluster.err"; then
+              clusters=1
+            elif grep -q ResourceNotFoundException "$RUNNER_TEMP/describe-cluster.err"; then
+              clusters=0
+            else
+              cat "$RUNNER_TEMP/describe-cluster.err" >&2
+              exit 1
+            fi
+            instances=$(aws ec2 describe-instances --filters Name=instance-state-name,Values=pending,running --query 'length(Reservations[].Instances[])' --output text)
+            load_balancers=$(aws elbv2 describe-load-balancers --query 'length(LoadBalancers)' --output text)
+            cluster_tagged=$(aws resourcegroupstaggingapi get-resources --tag-filters Key=Stack,Values=cluster --query 'length(ResourceTagMappingList)' --output text)
+            lb_tagged=$(aws resourcegroupstaggingapi get-resources --tag-filters "Key=elbv2.k8s.aws/cluster,Values=${CLUSTER_NAME}" --query 'length(ResourceTagMappingList)' --output text)
+            records=$(aws route53 list-resource-record-sets --hosted-zone-id "$zone_id" --query "length(ResourceRecordSets[?Type!='NS' && Type!='SOA' && Type!='CNAME'])" --output text)
+            total=$((clusters + instances + load_balancers + cluster_tagged + lb_tagged + records))
+            echo "cluster: $clusters, instances: $instances, load balancers: $load_balancers, Stack=cluster: $cluster_tagged, load balancer tags: $lb_tagged, DNS records: $records"
+            if [ "$total" = 0 ]; then
+              break
+            fi
+            sleep 30
+          done
+          {
+            echo "| Leftover | Count |"
+            echo "|---|---|"
+            echo "| EKS cluster | $clusters |"
+            echo "| Running EC2 instances | $instances |"
+            echo "| Load balancers | $load_balancers |"
+            echo "| Resources tagged Stack=cluster | $cluster_tagged |"
+            echo "| Resources tagged elbv2.k8s.aws/cluster | $lb_tagged |"
+            echo "| DNS records other than NS, SOA and CNAME | $records |"
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ "$total" != 0 ]; then
+            echo "::error::Some resources are left. See the summary."
+            exit 1
+          fi
