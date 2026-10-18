@@ -211,3 +211,8 @@ jobs:
           done
           echo "::error::The load balancer or the DNS records are still there after 5 minutes. The controllers are kept for a manual check."
           exit 1
+
+      - name: Uninstall the controllers
+        if: steps.cluster.outputs.exists == 'true'
+        working-directory: hotaru-deploy
+        run: helmfile destroy
