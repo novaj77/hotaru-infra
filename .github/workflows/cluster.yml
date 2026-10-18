@@ -70,6 +70,11 @@ jobs:
           path: hotaru-deploy
           persist-credentials: false
 
+      - name: Set up Helm, helmfile and helm-diff
+        uses: ./hotaru-deploy/.github/actions/setup-helmfile
+        with:
+          helm-diff: true
+
   down:
     if: inputs.action == 'down'
     runs-on: ubuntu-24.04
