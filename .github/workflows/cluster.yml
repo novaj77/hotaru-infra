@@ -190,3 +190,8 @@ jobs:
       - name: Update kubeconfig
         if: steps.cluster.outputs.exists == 'true'
         run: aws eks update-kubeconfig --name "$CLUSTER_NAME" --alias hotaru
+
+      - name: Uninstall hotaru-api
+        if: steps.cluster.outputs.exists == 'true'
+        working-directory: hotaru-deploy
+        run: helmfile -l name=hotaru-api destroy
