@@ -52,6 +52,16 @@ jobs:
         working-directory: terraform/cluster
         run: terraform apply -input=false cluster.tfplan
 
+      - name: Create a token for hotaru-deploy
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.DEPLOY_READER_APP_CLIENT_ID }}
+          private-key: ${{ secrets.DEPLOY_READER_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: hotaru-deploy
+          permission-contents: read
+
   down:
     if: inputs.action == 'down'
     runs-on: ubuntu-24.04
