@@ -32,6 +32,9 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 40
     steps:
+      - name: Record the start time
+        run: echo "STARTED_AT=$(date +%s)" >> "$GITHUB_ENV"
+
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
@@ -110,6 +113,17 @@ jobs:
           done
           echo "::error::https://${API_HOST}/healthz did not return ok in 10 minutes"
           exit 1
+
+      - name: Write the summary
+        run: |
+          minutes=$(( ($(date +%s) - STARTED_AT) / 60 ))
+          {
+            echo "Cluster $CLUSTER_NAME is up in about $minutes minutes: https://${API_HOST}/healthz"
+            echo
+            echo '```'
+            helm list --kube-context hotaru --all-namespaces
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
   down:
     if: inputs.action == 'down'
