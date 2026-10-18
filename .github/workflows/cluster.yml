@@ -130,6 +130,9 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
+      - name: Record the start time
+        run: echo "STARTED_AT=$(date +%s)" >> "$GITHUB_ENV"
+
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
@@ -267,3 +270,9 @@ jobs:
             echo "::error::Some resources are left. See the summary."
             exit 1
           fi
+
+      - name: Write the summary
+        if: steps.cluster.outputs.exists == 'true'
+        run: |
+          minutes=$(( ($(date +%s) - STARTED_AT) / 60 ))
+          echo "Cluster $CLUSTER_NAME is down in about $minutes minutes" >> "$GITHUB_STEP_SUMMARY"
