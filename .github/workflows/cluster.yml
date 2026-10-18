@@ -99,6 +99,18 @@ jobs:
           echo "::error::The A record for $API_HOST did not appear in 10 minutes"
           exit 1
 
+      - name: Wait for /healthz
+        run: |
+          for _ in $(seq 1 60); do
+            if [ "$(curl -fsS --max-time 5 "https://${API_HOST}/healthz" 2>/dev/null)" = ok ]; then
+              echo "https://${API_HOST}/healthz returned ok"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "::error::https://${API_HOST}/healthz did not return ok in 10 minutes"
+          exit 1
+
   down:
     if: inputs.action == 'down'
     runs-on: ubuntu-24.04
