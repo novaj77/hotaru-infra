@@ -195,3 +195,19 @@ jobs:
         if: steps.cluster.outputs.exists == 'true'
         working-directory: hotaru-deploy
         run: helmfile -l name=hotaru-api destroy
+
+      - name: Wait for the load balancer and the DNS records to go away
+        if: steps.cluster.outputs.exists == 'true'
+        run: |
+          zone_id=$(aws route53 list-hosted-zones-by-name --dns-name "$ZONE_NAME" --query "HostedZones[?Name=='${ZONE_NAME}.'].Id | [0]" --output text)
+          for _ in $(seq 1 30); do
+            tagged=$(aws resourcegroupstaggingapi get-resources --tag-filters "Key=elbv2.k8s.aws/cluster,Values=${CLUSTER_NAME}" --query 'length(ResourceTagMappingList)' --output text)
+            records=$(aws route53 list-resource-record-sets --hosted-zone-id "$zone_id" --query "length(ResourceRecordSets[?Type!='NS' && Type!='SOA' && Type!='CNAME'])" --output text)
+            echo "load balancer resources: $tagged, DNS records: $records"
+            if [ "$tagged" = 0 ] && [ "$records" = 0 ]; then
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "::error::The load balancer or the DNS records are still there after 5 minutes. The controllers are kept for a manual check."
+          exit 1
