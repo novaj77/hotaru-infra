@@ -79,6 +79,10 @@ jobs:
       - name: Update kubeconfig
         run: aws eks update-kubeconfig --name "$CLUSTER_NAME" --alias hotaru
 
+      - name: Install everything with helmfile
+        working-directory: hotaru-deploy
+        run: helmfile apply
+
   down:
     if: inputs.action == 'down'
     runs-on: ubuntu-24.04
