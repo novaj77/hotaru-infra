@@ -12,6 +12,7 @@ hotaruのAWSをTerraformで作るリポジトリ
 
 - PRでは、3つのstackでTerraformの書式と構文を確かめる
 - ワークフローを手で動かすと、クラスタを起動（up）・停止（down）する。upはhotaru-apiまで入れて`/healthz`を確かめ、downは消し忘れまで確かめる
+- upとdownの結果（成功・失敗）は、SlackのIncoming Webhookで#hotaruに知らせる
 
 ## 使用技術
 
