@@ -125,6 +125,22 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Notify Slack
+        if: always()
+        continue-on-error: true
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          JOB_STATUS: ${{ job.status }}
+        run: |
+          run_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          minutes=$(( ($(date +%s) - STARTED_AT) / 60 ))
+          if [ "$JOB_STATUS" = success ]; then
+            text="✅ hotaru up 完了（${minutes} 分）"$'\n'"https://${API_HOST}/healthz"$'\n'"ログ: ${run_url}"
+          else
+            text="❌ hotaru up が失敗しました（${JOB_STATUS}）。お金がかかるので、down で片付けてください"$'\n'"ログ: ${run_url}"
+          fi
+          jq -n --arg text "$text" '{text: $text}' | curl -fsS -X POST -H 'Content-type: application/json' --data @- "$SLACK_WEBHOOK_URL"
+
   down:
     if: inputs.action == 'down'
     runs-on: ubuntu-24.04
@@ -276,3 +292,22 @@ jobs:
         run: |
           minutes=$(( ($(date +%s) - STARTED_AT) / 60 ))
           echo "Cluster $CLUSTER_NAME is down in about $minutes minutes" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Notify Slack
+        if: always()
+        continue-on-error: true
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          JOB_STATUS: ${{ job.status }}
+          CLUSTER_EXISTED: ${{ steps.cluster.outputs.exists }}
+        run: |
+          run_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          minutes=$(( ($(date +%s) - STARTED_AT) / 60 ))
+          if [ "$JOB_STATUS" != success ]; then
+            text="❌ hotaru down が失敗しました（${JOB_STATUS}）。ログを見てください"$'\n'"ログ: ${run_url}"
+          elif [ "$CLUSTER_EXISTED" = true ]; then
+            text="✅ hotaru down 完了（${minutes} 分）消し忘れ 0"
+          else
+            text="✅ hotaru down：クラスタは無かった。消し忘れ 0"
+          fi
+          jq -n --arg text "$text" '{text: $text}' | curl -fsS -X POST -H 'Content-type: application/json' --data @- "$SLACK_WEBHOOK_URL"
